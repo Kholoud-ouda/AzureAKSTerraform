@@ -1,0 +1,40 @@
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage:
+  displayName: 'Terraform init'
+  jobs:
+  - job: IaCInit
+    steps:
+      - task: TerraformInstaller@0
+        displayName: install terraform
+        inputs:
+          terraformVersion: latest
+      - task: TerraformCLI@0
+        displayName: "Terraform Init"
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          backendType: azurerm
+          ensureBackend: true
+          backendAzureRmResourceGroupName: $(RG)
+          backendAzureRmResourceGroupLocation: $(LOCATION)
+          backendAzureRmStorageAccountSku: 'Standard_RAGRS'
+          backendAzureRmStorageAccountName: $(ACCOUNT_NAME)
+          backendAzureRmContainerName: $(ENV)
+          backendAzureRmKey: $(ENV).tfstate
+          backendServiceArm: 'IaC_Pipelines' ## your Azure service connection name 
+      - task: TerraformCLI@0
+        displayName: 'Terraform Plan'
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          environmentServiceName: 'IaC_Pipelines' ## your Azure service connection name 
+      - task: TerraformCLI@0
+        displayName: 'Terraform Apply'
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          commandOptions: '-input=false -auto-approve'
+          environmentServiceName: 'IaC_Pipelines' ## your Azure service connection name 
